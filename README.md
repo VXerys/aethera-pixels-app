@@ -36,7 +36,7 @@
 
 ## 📖 Daftar Isi
 
-- [Aethera Pixelis — Advanced Digital Image Processing (UTS)](#aethera-pixelis--advanced-digital-image-processing-uts)
+- [Aethera Pixels — Advanced Digital Image Processing (UTS)](#aethera-pixelis--advanced-digital-image-processing-uts)
   - [📌 Informasi Akademik](#-informasi-akademik)
   - [👥 Tim Pengembang](#-tim-pengembang)
   - [📖 Daftar Isi](#-daftar-isi)
@@ -68,7 +68,7 @@
 
 ## 🎯 Ringkasan Proyek
 
-**Aethera Pixelis** adalah aplikasi web interaktif untuk pengolahan citra digital tingkat lanjut. Pendekatan inti adalah **Pipeline Formula**: pre-processing → core algorithm → post-processing. Aplikasi berorientasi edukasi dan praktis untuk kebutuhan UTS, riset, dan demonstrasi.
+**Aethera Pixels** adalah aplikasi web interaktif untuk pengolahan citra digital tingkat lanjut. Pendekatan inti adalah **Pipeline Formula**: pre-processing → core algorithm → post-processing. Aplikasi berorientasi edukasi dan praktis untuk kebutuhan UTS, riset, dan demonstrasi.
 
 Sorotan:
 - Antarmuka modern (single-page) dengan kontrol jelas dan log proses.
