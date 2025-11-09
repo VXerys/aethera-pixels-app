@@ -1,4 +1,4 @@
-# Aethera Pixelis — Advanced Digital Image Processing (UTS)
+# Aethera Pixels— Advanced Digital Image Processing (UTS)
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Streamlit](https://img.shields.io/badge/streamlit-%E2%89%A51.28-FF4B4B)
