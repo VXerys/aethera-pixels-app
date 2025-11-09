@@ -1033,47 +1033,42 @@ if clear_button:
 
 # Image processing logic
 if process_button and st.session_state.uploaded_image:
-    # Convert PIL ke OpenCV
+    # Convert PIL ke OpenCV (BGR)
     input_cv = io_utils.ImageIO.load_image_from_pil(st.session_state.uploaded_image)
-    
+
     with st.spinner("🔄 Processing image... This may take a moment"):
         try:
             add_log(f"Starting {pipeline} pipeline")
             add_log(f"Input resolution: {input_cv.shape[1]}x{input_cv.shape[0]}")
-            
-            # Convert BGR to RGB untuk processing
-            input_rgb = cv2.cvtColor(input_cv, cv2.COLOR_BGR2RGB)
-            
+
             if pipeline == 'Super Resolution 4K Enhance':
                 add_log(f"Scale factor: {params['scale_factor']}x")
                 add_log("Using optimized edge-aware detail recovery pipeline")
-                
-                # Call optimized pipeline
-                output_rgb = SuperResolution4K.process(input_rgb, params)
-                # Convert back to BGR untuk consistency
-                output = cv2.cvtColor(output_rgb, cv2.COLOR_RGB2BGR)
-                
+
+                # Pipeline expects BGR input and returns BGR
+                output_bgr = SuperResolution4K.process(input_cv, params)
+                output = output_bgr
+
                 add_log(f"Output resolution: {output.shape[1]}x{output.shape[0]}")
-            
+
             elif pipeline == 'Creative Filmic Effect':
                 add_log("Using optimized cinematic grading pipeline with split-toning")
-                
-                # Call optimized pipeline
-                output_rgb = CreativeFilmicEffect.process(input_rgb, params)
-                # Convert back to BGR
-                output = cv2.cvtColor(output_rgb, cv2.COLOR_RGB2BGR)
-            
+
+                # Pipeline expects BGR input and returns BGR
+                output_bgr = CreativeFilmicEffect.process(input_cv, params)
+                output = output_bgr
+
             else:  # Selective Texture Enhancement
                 add_log("Using optimized multi-scale texture enhancement pipeline")
-                
-                # Call optimized pipeline
+
+                # This pipeline expects RGB, so convert from BGR -> RGB, then back
+                input_rgb = cv2.cvtColor(input_cv, cv2.COLOR_BGR2RGB)
                 output_rgb = SelectiveTextureEnhancement.process(input_rgb, params)
-                # Convert back to BGR
                 output = cv2.cvtColor(output_rgb, cv2.COLOR_RGB2BGR)
-            
+
             st.session_state.processed_image = output
             add_log("✅ Pipeline completed successfully!")
-            
+
         except Exception as e:
             add_log(f"❌ Error: {str(e)}")
             st.error(f"Processing error: {str(e)}")
