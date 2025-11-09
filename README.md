@@ -16,7 +16,7 @@
 | Mata Kuliah | Pengolahan Citra Digital |
 | Semester | 5 (Lima) |
 | Jenis Tugas | Ujian Tengah Semester (UTS) |
-| Institusi | [Nama Universitas/Prodi] |
+| Institusi | Universitas Nusa Putra/Teknik Informatika] |
 | Tahun Akademik | 2024/2025 |
 | Tanggal Pengumpulan | 9 November 2025 |
 
