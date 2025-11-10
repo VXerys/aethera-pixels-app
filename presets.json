@@ -1,0 +1,98 @@
+{
+  "conservative": {
+    "super_resolution_4k": {
+      "description": "Low risk enhancement with gentle denoise and sharpening.",
+      "scale_factor": 2,
+      "denoise_strength": 0.5,
+      "detail_boost": 0.55,
+      "local_contrast": 0.12,
+      "halo_guard": 0.6,
+      "edge_mix": 0.6
+    },
+    "creative_filmic_effect": {
+      "description": "Soft filmic toning with minimal grain and bloom.",
+      "tone_strength": 0.22,
+      "shadow_warmth": 0.10,
+      "highlight_cool": 0.08,
+      "micro_contrast": 0.08,
+      "grain": 0.012,
+      "bloom": 0.03,
+      "mix": 0.6,
+      "skin_preserve": 0.5
+    },
+    "selective_texture_enhancement": {
+      "description": "Subtle texture recovery prioritising smooth areas.",
+      "detail_gain": 0.45,
+      "micro_contrast": 0.08,
+      "blend": 0.6,
+      "texture_threshold": 0.3,
+      "texture_softness": 1.2,
+      "skin_protect": 0.7,
+      "edge_boost": 0.22
+    }
+  },
+  "balanced": {
+    "super_resolution_4k": {
+      "description": "Balanced clarity with adaptive denoise and local contrast.",
+      "scale_factor": 3,
+      "denoise_strength": 0.7,
+      "detail_boost": 0.85,
+      "local_contrast": 0.2,
+      "halo_guard": 0.5,
+      "edge_mix": 0.78
+    },
+    "creative_filmic_effect": {
+      "description": "Cinematic teal–orange with micro-contrast and gentle bloom.",
+      "tone_strength": 0.35,
+      "shadow_warmth": 0.18,
+      "highlight_cool": 0.16,
+      "micro_contrast": 0.12,
+      "grain": 0.025,
+      "bloom": 0.065,
+      "mix": 0.75,
+      "skin_preserve": 0.4
+    },
+    "selective_texture_enhancement": {
+      "description": "Recover tactile textures while protecting skin.",
+      "detail_gain": 0.6,
+      "micro_contrast": 0.12,
+      "blend": 0.7,
+      "texture_threshold": 0.26,
+      "texture_softness": 1.0,
+      "skin_protect": 0.6,
+      "edge_boost": 0.3
+    }
+  },
+  "aggressive": {
+    "super_resolution_4k": {
+      "description": "Maximum detail boost with stronger sharpening (watch halos).",
+      "scale_factor": 4,
+      "denoise_strength": 0.9,
+      "detail_boost": 1.05,
+      "local_contrast": 0.32,
+      "halo_guard": 0.45,
+      "edge_mix": 0.9
+    },
+    "creative_filmic_effect": {
+      "description": "Stronger toning, crisp micro-contrast, and visible grain/bloom.",
+      "tone_strength": 0.5,
+      "shadow_warmth": 0.24,
+      "highlight_cool": 0.22,
+      "micro_contrast": 0.2,
+      "grain": 0.045,
+      "bloom": 0.1,
+      "mix": 0.9,
+      "skin_preserve": 0.35
+    },
+    "selective_texture_enhancement": {
+      "description": "Pronounced detail enhancement with moderate skin protection.",
+      "detail_gain": 0.8,
+      "micro_contrast": 0.18,
+      "blend": 0.8,
+      "texture_threshold": 0.22,
+      "texture_softness": 0.9,
+      "skin_protect": 0.5,
+      "edge_boost": 0.4
+    }
+  }
+}

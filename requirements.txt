@@ -1,0 +1,12 @@
+# Core app
+streamlit>=1.28
+numpy>=1.24
+pillow>=10.0
+
+# Image processing
+opencv-python-headless>=4.8.1.78
+scipy>=1.10
+
+# Optional (uncomment if you enable ESRGAN/SwinIR pipelines)
+# torch>=2.2
+# torchvision>=0.17
