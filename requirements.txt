@@ -6,7 +6,9 @@ pillow>=10.0
 # Image processing
 opencv-python-headless>=4.8.1.78
 scipy>=1.10
+matplotlib
+pywavelets
 
 # Optional (uncomment if you enable ESRGAN/SwinIR pipelines)
-# torch>=2.2
-# torchvision>=0.17
+torch>=2.2
+torchvision>=0.17

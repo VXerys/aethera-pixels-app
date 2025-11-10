@@ -10,11 +10,13 @@ from PIL import Image, UnidentifiedImageError
 import io
 import html
 from datetime import datetime
+import matplotlib.pyplot as plt # === BARU ===
 
 # Import pipeline modules
 from app.components.dnd_uploader import dnd_uploader
 from pipeline import SuperResolution4K, SelectiveTextureEnhancement, CreativeFilmicEffect
 from pipeline import filters, enhancement, restoration
+from pipeline import transforms # === BARU ===
 from utils import io_utils, metrics
 import json
 
@@ -559,6 +561,16 @@ PIPELINE_META = {
             'Multi-scale detail fusion for controlled sharpening',
             'Skin protection controls to avoid oversharpening faces'
         ]
+    },
+    # === BARU ===
+    'Transformasi Domain': {
+        'key': 'domain_transform',
+        'tagline': 'Analisis citra dalam domain frekuensi.',
+        'highlights': [
+            'Visualisasi Spektrum Fourier (FFT)',
+            'Visualisasi Spektrum DCT (Discrete Cosine Transform)',
+            'Dekomposisi Wavelet (DWT-Haar)'
+        ]
     }
 }
 
@@ -637,6 +649,22 @@ def display_pipeline_formula(pipeline_name):
             Purpose: Blend enhanced details back seamlessly
                     ↓
             **OUTPUT IMAGE (Enhanced Texture)**
+        """,
+        # === BARU ===
+        'Transformasi Domain': """
+            **INPUT IMAGE (Grayscale)**
+                    ↓
+            **STEP 1: TRANSFORMASI**
+            Method: Fourier (FFT), Cosine (DCT), or Wavelet (DWT)
+            Formula (FFT): F(u,v) = Σ f(x,y) × e^(-j2π(ux/M + vy/N))
+            Purpose: Mengubah citra dari domain spasial ke domain frekuensi
+                    ↓
+            **STEP 2: VISUALISASI SPEKTRUM**
+            Method: Logarithmic Scale
+            Formula: S = c × log(1 + |F(u,v)|)
+            Purpose: Menampilkan magnitudo frekuensi agar terlihat
+                    ↓
+            **OUTPUT (Gambar Spektrum / Koefisien)**
         """
     }
     
@@ -648,6 +676,7 @@ def display_pipeline_formula(pipeline_name):
 # ============================================================================
 
 presets_data = load_presets()
+# === MODIFIKASI ===: Daftar pipeline sekarang diambil dari PIPELINE_META
 pipeline_options = list(PIPELINE_META.keys())
 
 if 'pipeline_select' not in st.session_state:
@@ -779,228 +808,251 @@ with hero_container:
 controls_col, summary_col = st.columns([1.45, 1], gap="large")
 
 params = {}
-preset_mode = 'balanced'
+preset_mode = 'balanced' # Default
 
 with controls_col:
     st.markdown("<div class='glass-card controls-card'>", unsafe_allow_html=True)
     st.markdown("<div class='card-title'>Pipeline Controls <span>Choose & Tune</span></div>", unsafe_allow_html=True)
 
+    # === MODIFIKASI ===: Sekarang 'pipeline_options' menyertakan 'Transformasi Domain'
     pipeline = st.selectbox(
         "Enhancement pipeline",
         options=pipeline_options,
         key='pipeline_select'
     )
+    
+    # === MODIFIKASI ===: Logika kontrol dipisah.
+    # Jika BUKAN transformasi, tunjukkan preset. Jika YA, tunjukkan pilihan transformasi.
+    if pipeline != 'Transformasi Domain':
+        # --- Logika yang sudah ada untuk pipeline pemrosesan ---
+        meta = PIPELINE_META[pipeline]
+        preset_state_key = f"{meta['key']}_preset"
+        custom_state_key = f"{meta['key']}_custom"
 
-    meta = PIPELINE_META[pipeline]
-    preset_state_key = f"{meta['key']}_preset"
-    custom_state_key = f"{meta['key']}_custom"
+        preset_mode = st.selectbox(
+            "Preset intensity",
+            options=['conservative', 'balanced', 'aggressive'],
+            key=preset_state_key
+        )
+        params['preset_mode'] = preset_mode # Simpan preset mode
 
-    preset_mode = st.selectbox(
-        "Preset intensity",
-        options=['conservative', 'balanced', 'aggressive'],
-        key=preset_state_key
-    )
+        preset_payload = presets_data[preset_mode][meta['key']]
+        preset_description = preset_payload.get('description', '')
+        preset_params = {k: v for k, v in preset_payload.items() if k != 'description'}
 
-    preset_payload = presets_data[preset_mode][meta['key']]
-    preset_description = preset_payload.get('description', '')
-    preset_params = {k: v for k, v in preset_payload.items() if k != 'description'}
+        st.markdown(
+            f"<div class='preset-description'><strong>{preset_mode.title()} preset</strong> · {preset_description}</div>",
+            unsafe_allow_html=True
+        )
 
-    st.markdown(
-        f"<div class='preset-description'><strong>{preset_mode.title()} preset</strong> · {preset_description}</div>",
-        unsafe_allow_html=True
-    )
+        custom_override = st.checkbox("Fine-tune parameters", key=custom_state_key)
 
-    custom_override = st.checkbox("Fine-tune parameters", key=custom_state_key)
+        if pipeline == 'Super Resolution 4K Enhance':
+            if custom_override:
+                col_a, col_b = st.columns(2)
+                scale_factor = col_a.select_slider(
+                    "Upscaling factor",
+                    options=[2, 3, 4],
+                    value=int(preset_params.get('scale_factor', 4))
+                )
+                denoise_strength = col_a.slider(
+                    "Denoise strength",
+                    min_value=0.2,
+                    max_value=1.2,
+                    value=float(preset_params.get('denoise_strength', 0.7)),
+                    step=0.05
+                )
+                detail_boost = col_b.slider(
+                    "Detail boost",
+                    min_value=0.3,
+                    max_value=1.2,
+                    value=float(preset_params.get('detail_boost', 0.85)),
+                    step=0.05
+                )
+                local_contrast = col_b.slider(
+                    "Local contrast",
+                    min_value=0.0,
+                    max_value=0.4,
+                    value=float(preset_params.get('local_contrast', 0.2)),
+                    step=0.02
+                )
+                halo_guard = st.slider(
+                    "Halo guard",
+                    min_value=0.3,
+                    max_value=0.9,
+                    value=float(preset_params.get('halo_guard', 0.5)),
+                    step=0.05
+                )
+                edge_mix = st.slider(
+                    "Edge mix",
+                    min_value=0.4,
+                    max_value=1.0,
+                    value=float(preset_params.get('edge_mix', 0.78)),
+                    step=0.05
+                )
+                params.update({
+                    'scale_factor': int(scale_factor),
+                    'denoise_strength': float(denoise_strength),
+                    'detail_boost': float(detail_boost),
+                    'local_contrast': float(local_contrast),
+                    'halo_guard': float(halo_guard),
+                    'edge_mix': float(edge_mix)
+                })
+            else:
+                params.update(preset_params.copy())
 
-    if pipeline == 'Super Resolution 4K Enhance':
-        if custom_override:
-            col_a, col_b = st.columns(2)
-            scale_factor = col_a.select_slider(
-                "Upscaling factor",
-                options=[2, 3, 4],
-                value=int(preset_params.get('scale_factor', 4))
-            )
-            denoise_strength = col_a.slider(
-                "Denoise strength",
-                min_value=0.2,
-                max_value=1.2,
-                value=float(preset_params.get('denoise_strength', 0.7)),
-                step=0.05
-            )
-            detail_boost = col_b.slider(
-                "Detail boost",
-                min_value=0.3,
-                max_value=1.2,
-                value=float(preset_params.get('detail_boost', 0.85)),
-                step=0.05
-            )
-            local_contrast = col_b.slider(
-                "Local contrast",
-                min_value=0.0,
-                max_value=0.4,
-                value=float(preset_params.get('local_contrast', 0.2)),
-                step=0.02
-            )
-            halo_guard = st.slider(
-                "Halo guard",
-                min_value=0.3,
-                max_value=0.9,
-                value=float(preset_params.get('halo_guard', 0.5)),
-                step=0.05
-            )
-            edge_mix = st.slider(
-                "Edge mix",
-                min_value=0.4,
-                max_value=1.0,
-                value=float(preset_params.get('edge_mix', 0.78)),
-                step=0.05
-            )
-            params = {
-                'scale_factor': int(scale_factor),
-                'denoise_strength': float(denoise_strength),
-                'detail_boost': float(detail_boost),
-                'local_contrast': float(local_contrast),
-                'halo_guard': float(halo_guard),
-                'edge_mix': float(edge_mix)
-            }
-        else:
-            params = preset_params.copy()
+        elif pipeline == 'Creative Filmic Effect':
+            if custom_override:
+                col_a, col_b = st.columns(2)
+                tone_strength = col_a.slider(
+                    "Tone strength",
+                    min_value=0.0,
+                    max_value=0.6,
+                    value=float(preset_params.get('tone_strength', 0.35)),
+                    step=0.02
+                )
+                shadow_warmth = col_a.slider(
+                    "Shadow warmth",
+                    min_value=0.0,
+                    max_value=0.3,
+                    value=float(preset_params.get('shadow_warmth', 0.18)),
+                    step=0.01
+                )
+                highlight_cool = col_a.slider(
+                    "Highlight cool",
+                    min_value=0.0,
+                    max_value=0.3,
+                    value=float(preset_params.get('highlight_cool', 0.16)),
+                    step=0.01
+                )
+                micro_contrast = col_b.slider(
+                    "Micro contrast",
+                    min_value=0.0,
+                    max_value=0.3,
+                    value=float(preset_params.get('micro_contrast', 0.12)),
+                    step=0.01
+                )
+                grain = col_b.slider(
+                    "Film grain",
+                    min_value=0.0,
+                    max_value=0.08,
+                    value=float(preset_params.get('grain', 0.025)),
+                    step=0.005
+                )
+                bloom = st.slider(
+                    "Bloom strength",
+                    min_value=0.0,
+                    max_value=0.12,
+                    value=float(preset_params.get('bloom', 0.065)),
+                    step=0.005
+                )
+                mix = st.slider(
+                    "Look mix",
+                    min_value=0.4,
+                    max_value=0.95,
+                    value=float(preset_params.get('mix', 0.75)),
+                    step=0.05
+                )
+                skin_preserve = st.slider(
+                    "Skin preserve",
+                    min_value=0.0,
+                    max_value=0.6,
+                    value=float(preset_params.get('skin_preserve', 0.4)),
+                    step=0.05
+                )
+                params.update({
+                    'tone_strength': float(tone_strength),
+                    'shadow_warmth': float(shadow_warmth),
+                    'highlight_cool': float(highlight_cool),
+                    'micro_contrast': float(micro_contrast),
+                    'grain': float(grain),
+                    'bloom': float(bloom),
+                    'mix': float(mix),
+                    'skin_preserve': float(skin_preserve)
+                })
+            else:
+                params.update(preset_params.copy())
 
-    elif pipeline == 'Creative Filmic Effect':
-        if custom_override:
-            col_a, col_b = st.columns(2)
-            tone_strength = col_a.slider(
-                "Tone strength",
-                min_value=0.0,
-                max_value=0.6,
-                value=float(preset_params.get('tone_strength', 0.35)),
-                step=0.02
-            )
-            shadow_warmth = col_a.slider(
-                "Shadow warmth",
-                min_value=0.0,
-                max_value=0.3,
-                value=float(preset_params.get('shadow_warmth', 0.18)),
-                step=0.01
-            )
-            highlight_cool = col_a.slider(
-                "Highlight cool",
-                min_value=0.0,
-                max_value=0.3,
-                value=float(preset_params.get('highlight_cool', 0.16)),
-                step=0.01
-            )
-            micro_contrast = col_b.slider(
-                "Micro contrast",
-                min_value=0.0,
-                max_value=0.3,
-                value=float(preset_params.get('micro_contrast', 0.12)),
-                step=0.01
-            )
-            grain = col_b.slider(
-                "Film grain",
-                min_value=0.0,
-                max_value=0.08,
-                value=float(preset_params.get('grain', 0.025)),
-                step=0.005
-            )
-            bloom = st.slider(
-                "Bloom strength",
-                min_value=0.0,
-                max_value=0.12,
-                value=float(preset_params.get('bloom', 0.065)),
-                step=0.005
-            )
-            mix = st.slider(
-                "Look mix",
-                min_value=0.4,
-                max_value=0.95,
-                value=float(preset_params.get('mix', 0.75)),
-                step=0.05
-            )
-            skin_preserve = st.slider(
-                "Skin preserve",
-                min_value=0.0,
-                max_value=0.6,
-                value=float(preset_params.get('skin_preserve', 0.4)),
-                step=0.05
-            )
-            params = {
-                'tone_strength': float(tone_strength),
-                'shadow_warmth': float(shadow_warmth),
-                'highlight_cool': float(highlight_cool),
-                'micro_contrast': float(micro_contrast),
-                'grain': float(grain),
-                'bloom': float(bloom),
-                'mix': float(mix),
-                'skin_preserve': float(skin_preserve)
-            }
-        else:
-            params = preset_params.copy()
+        elif pipeline == 'Selective Texture Enhancement': # === MODIFIKASI ===: diubah dari 'else'
+            if custom_override:
+                col_a, col_b = st.columns(2)
+                detail_gain = col_a.slider(
+                    "Detail gain",
+                    min_value=0.2,
+                    max_value=0.9,
+                    value=float(preset_params.get('detail_gain', 0.6)),
+                    step=0.05
+                )
+                micro_contrast = col_a.slider(
+                    "Micro contrast",
+                    min_value=0.0,
+                    max_value=0.2,
+                    value=float(preset_params.get('micro_contrast', 0.12)),
+                    step=0.01
+                )
+                blend = col_b.slider(
+                    "Blend amount",
+                    min_value=0.3,
+                    max_value=0.9,
+                    value=float(preset_params.get('blend', 0.7)),
+                    step=0.05
+                )
+                texture_threshold = col_b.slider(
+                    "Texture threshold",
+                    min_value=0.1,
+                    max_value=0.5,
+                    value=float(preset_params.get('texture_threshold', 0.26)),
+                    step=0.02
+                )
+                texture_softness = st.slider(
+                    "Texture softness",
+                    min_value=0.5,
+                    max_value=1.5,
+                    value=float(preset_params.get('texture_softness', 1.0)),
+                    step=0.05
+                )
+                skin_protect = st.slider(
+                    "Skin protect",
+                    min_value=0.3,
+                    max_value=0.9,
+                    value=float(preset_params.get('skin_protect', 0.6)),
+                    step=0.05
+                )
+                edge_boost = st.slider(
+                    "Edge boost",
+                    min_value=0.0,
+                    max_value=0.5,
+                    value=float(preset_params.get('edge_boost', 0.3)),
+                    step=0.02
+                )
+                params.update({
+                    'detail_gain': float(detail_gain),
+                    'micro_contrast': float(micro_contrast),
+                    'blend': float(blend),
+                    'texture_threshold': float(texture_threshold),
+                    'texture_softness': float(texture_softness),
+                    'skin_protect': float(skin_protect),
+                    'edge_boost': float(edge_boost)
+                })
+            else:
+                params.update(preset_params.copy())
 
-    else:  # Selective Texture Enhancement
-        if custom_override:
-            col_a, col_b = st.columns(2)
-            detail_gain = col_a.slider(
-                "Detail gain",
-                min_value=0.2,
-                max_value=0.9,
-                value=float(preset_params.get('detail_gain', 0.6)),
-                step=0.05
-            )
-            micro_contrast = col_a.slider(
-                "Micro contrast",
-                min_value=0.0,
-                max_value=0.2,
-                value=float(preset_params.get('micro_contrast', 0.12)),
-                step=0.01
-            )
-            blend = col_b.slider(
-                "Blend amount",
-                min_value=0.3,
-                max_value=0.9,
-                value=float(preset_params.get('blend', 0.7)),
-                step=0.05
-            )
-            texture_threshold = col_b.slider(
-                "Texture threshold",
-                min_value=0.1,
-                max_value=0.5,
-                value=float(preset_params.get('texture_threshold', 0.26)),
-                step=0.02
-            )
-            texture_softness = st.slider(
-                "Texture softness",
-                min_value=0.5,
-                max_value=1.5,
-                value=float(preset_params.get('texture_softness', 1.0)),
-                step=0.05
-            )
-            skin_protect = st.slider(
-                "Skin protect",
-                min_value=0.3,
-                max_value=0.9,
-                value=float(preset_params.get('skin_protect', 0.6)),
-                step=0.05
-            )
-            edge_boost = st.slider(
-                "Edge boost",
-                min_value=0.0,
-                max_value=0.5,
-                value=float(preset_params.get('edge_boost', 0.3)),
-                step=0.02
-            )
-            params = {
-                'detail_gain': float(detail_gain),
-                'micro_contrast': float(micro_contrast),
-                'blend': float(blend),
-                'texture_threshold': float(texture_threshold),
-                'texture_softness': float(texture_softness),
-                'skin_protect': float(skin_protect),
-                'edge_boost': float(edge_boost)
-            }
-        else:
-            params = preset_params.copy()
+    # === BARU ===: Blok kontrol untuk pipeline Transformasi Domain
+    else: 
+        params['transform_type'] = st.selectbox(
+            "Pilih Jenis Analisis:",
+            ('Spektrum Fourier', 'Spektrum DCT', 'Wavelet (Haar)'),
+            key='transform_type_select'
+        )
+        # Setel parameter dummy agar logika summary tidak error
+        params['preset_mode'] = 'N/A' 
+        custom_override = False
+        st.session_state[custom_state_key] = False # Pastikan checkbox tidak aktif
+        st.markdown(
+            "<div class='preset-description'><strong>Mode Analisis</strong> · Menampilkan visualisasi domain frekuensi. Tidak ada parameter lanjutan untuk mode ini.</div>",
+            unsafe_allow_html=True
+        )
+
 
     action_col1, action_col2 = st.columns(2)
     process_button = action_col1.button("🚀 Process Image", use_container_width=True, type="primary")
@@ -1011,13 +1063,28 @@ with controls_col:
 with summary_col:
     st.markdown("<div class='glass-card pipeline-summary'>", unsafe_allow_html=True)
     st.markdown(f"<div class='card-title'>{pipeline}</div>", unsafe_allow_html=True)
+    
+    # === MODIFIKASI ===: Logika untuk menampilkan deskripsi pipeline
+    meta = PIPELINE_META[pipeline]
     st.markdown(f"<p class='accent-text'>{meta['tagline']}</p>", unsafe_allow_html=True)
     summary_list = "".join([f"<li>{point}</li>" for point in meta['highlights']])
     st.markdown(f"<ul>{summary_list}</ul>", unsafe_allow_html=True)
-    st.markdown(
-        f"<div class='preset-description'><strong>{preset_mode.title()} preset</strong> · {preset_description}</div>",
-        unsafe_allow_html=True
-    )
+    
+    if pipeline != 'Transformasi Domain':
+        # Logika yang sudah ada
+        preset_payload = presets_data[params['preset_mode']][meta['key']]
+        preset_description = preset_payload.get('description', '')
+        st.markdown(
+            f"<div class='preset-description'><strong>{params['preset_mode'].title()} preset</strong> · {preset_description}</div>",
+            unsafe_allow_html=True
+        )
+    else:
+        # Deskripsi kustom untuk Transformasi Domain
+        st.markdown(
+            "<div class='preset-description'><strong>Mode Analisis</strong> · Hasil akan menampilkan plot spektrum di jendela 'Output Image'.</div>",
+            unsafe_allow_html=True
+        )
+    
     st.markdown("</div>", unsafe_allow_html=True)
 
 with st.expander("📋 Pipeline Formula", expanded=False):
@@ -1035,11 +1102,15 @@ if clear_button:
 if process_button and st.session_state.uploaded_image:
     # Convert PIL ke OpenCV (BGR)
     input_cv = io_utils.ImageIO.load_image_from_pil(st.session_state.uploaded_image)
+    # === BARU ===: Konversi ke grayscale di awal untuk pipeline transformasi
+    image_gray = cv2.cvtColor(input_cv, cv2.COLOR_BGR2GRAY)
+
 
     with st.spinner("🔄 Processing image... This may take a moment"):
         try:
             add_log(f"Starting {pipeline} pipeline")
             add_log(f"Input resolution: {input_cv.shape[1]}x{input_cv.shape[0]}")
+            output = None # Inisialisasi output
 
             if pipeline == 'Super Resolution 4K Enhance':
                 add_log(f"Scale factor: {params['scale_factor']}x")
@@ -1058,7 +1129,8 @@ if process_button and st.session_state.uploaded_image:
                 output_bgr = CreativeFilmicEffect.process(input_cv, params)
                 output = output_bgr
 
-            else:  # Selective Texture Enhancement
+            # === MODIFIKASI ===: diubah dari 'else'
+            elif pipeline == 'Selective Texture Enhancement': 
                 add_log("Using optimized multi-scale texture enhancement pipeline")
 
                 # This pipeline expects RGB, so convert from BGR -> RGB, then back
@@ -1066,6 +1138,45 @@ if process_button and st.session_state.uploaded_image:
                 output_rgb = SelectiveTextureEnhancement.process(input_rgb, params)
                 output = cv2.cvtColor(output_rgb, cv2.COLOR_RGB2BGR)
 
+            # === BARU ===: Blok logika untuk Transformasi Domain
+            elif pipeline == 'Transformasi Domain':
+                add_log(f"Starting Domain Transform: {params['transform_type']}")
+                fig = None # Inisialisasi figure
+                
+                if params['transform_type'] == 'Spektrum Fourier':
+                    spectrum = transforms.get_fourier_spectrum(image_gray)
+                    fig = transforms.plot_fourier_spectrum(spectrum)
+                    add_log("Fourier Spectrum calculated.")
+                
+                elif params['transform_type'] == 'Spektrum DCT':
+                    spectrum = transforms.get_dct_spectrum(image_gray)
+                    fig = transforms.plot_dct_spectrum(spectrum)
+                    add_log("DCT Spectrum calculated.")
+                
+                elif params['transform_type'] == 'Wavelet (Haar)':
+                    LL, LH, HL, HH = transforms.get_wavelet_coeffs(image_gray, 'haar')
+                    fig = transforms.plot_wavelet_coeffs(LL, LH, HL, HH, 'haar')
+                    add_log("Wavelet (Haar) decomposition calculated.")
+                
+                # --- Workaround: Ubah plot Matplotlib ke gambar OpenCV ---
+                if fig is not None:
+                    # Simpan plot ke buffer
+                    buf = io.BytesIO()
+                    # Simpan dengan latar belakang dan padding yang konsisten
+                    fig.savefig(buf, format='PNG', bbox_inches='tight', pad_inches=0.1, facecolor='#0b1635')
+                    plt.close(fig) # Tutup plot agar tidak memakan memori
+                    buf.seek(0)
+                    
+                    # Baca buffer kembali sebagai numpy array
+                    file_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
+                    # Decode sebagai gambar BGR (karena sisa app menggunakan BGR)
+                    output = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR) 
+                    add_log("Analysis plot generated.")
+                else:
+                    output = input_cv # Failsafe
+                    add_log("No transform selected.")
+            
+            # Simpan hasil (baik gambar yang diproses atau plot)
             st.session_state.processed_image = output
             add_log("✅ Pipeline completed successfully!")
 
@@ -1095,13 +1206,20 @@ if st.session_state.uploaded_image or st.session_state.processed_image:
     with col_output:
         st.subheader("Output Image")
         if st.session_state.processed_image is not None:
-            output_pil = Image.fromarray(
-                io_utils.ImageIO.convert_bgr_to_rgb(st.session_state.processed_image)
-            )
+            # === MODIFIKASI ===: Logika konversi BGR -> RGB
+            # Cek apakah output adalah 3-channel BGR atau 2D Grayscale
+            if len(st.session_state.processed_image.shape) == 3 and st.session_state.processed_image.shape[2] == 3:
+                output_pil = Image.fromarray(
+                    io_utils.ImageIO.convert_bgr_to_rgb(st.session_state.processed_image)
+                )
+            else:
+                 # Jika grayscale (atau plot yang salah decode), konversi
+                output_pil = Image.fromarray(st.session_state.processed_image).convert("RGB")
+
             st.image(
                 output_pil,
                 use_container_width=True,
-                caption="Processed Image"
+                caption="Processed Image / Analysis" # Caption diubah
             )
             
             # Download button
