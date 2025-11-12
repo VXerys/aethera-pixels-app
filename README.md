@@ -27,10 +27,10 @@
 | Nama | NIM | Peran Utama |
 |---|---|---|
 | M. Sechan Alfarisi | 20230040094 | Project Lead & Core Developer — Arsitektur aplikasi, UI/UX Streamlit, integrasi pipeline, koordinasi tim |
-| s | 20230040031 | sl |
-| s | 20230040057 | Dokumen |
-| s | 20230040018 | PPT |
-| s | 20230040062 | s |
+| M. Akbar Rizky Saputra | 20230040236 | Document Project - Project Tester - Recording  |
+| M. Fathir Bagas | 20230040126 | Integrasi pipeline Tranformasi |
+| M. Ghibran Muslih| 20230040105 | Power Point|
+| M. Sinar Agusta | 20230040188 |  |
 
 ---
 
