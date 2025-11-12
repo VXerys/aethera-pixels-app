@@ -27,10 +27,10 @@
 | Nama | NIM | Peran Utama |
 |---|---|---|
 | M. Sechan Alfarisi | 20230040094 | Project Lead & Core Developer — Arsitektur aplikasi, UI/UX Streamlit, integrasi pipeline, koordinasi tim |
-| Nabila Putri Ananda | 20230040031 | AI/ML Specialist — Riset Super Resolution, kurasi ESRGAN/SwinIR, optimasi model |
-| Raka Aditya Pratama | 20230040057 | UI/UX Designer — Desain interface, tema & styling, UX flow |
-| Intan Maharani Dewi | 20230040018 | Documentation Specialist — Dokumentasi teknis, README & tutorial, materi presentasi |
-| Fajar Rizqi Ramadhan | 20230040062 | QA Engineer — Testing & debugging, benchmarking metrik, optimasi performa |
+| s | 20230040031 | sl |
+| s | 20230040057 | Dokumen |
+| s | 20230040018 | PPT |
+| s | 20230040062 | s |
 
 ---
 
